@@ -4,6 +4,10 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+variables:
+- name: MEND_URL
+  value: https://app-eu.whitesourcesoftware.com
+
 steps:
   - script: echo Testing Mend CLI IN Azure!
     displayName: 'Run a one-line script'
@@ -34,7 +38,6 @@ steps:
       export MEND_SCA_ORG_UUID="$(MEND_SCA_ORG_UUID)"
       export MEND_SCA_API_URL=https://api-app-eu.whitesourcesoftware.com/api/v2.0
       export MEND_LOG_LEVEL=DEBUG
-      export MEND_SCA_ENV=https://app-eu.whitesourcesoftware.com
     displayName: 'Set Mend environment variables'
 
   # Authenticate with Mend CLI
