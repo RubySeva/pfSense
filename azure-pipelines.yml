@@ -24,8 +24,6 @@ variables:
   # value: https://saas-eu.mend.io
 - name: MEND_SCA_ENV
   value: https://app-eu.whitesourcesoftware.com
-- name: MEND_SCA_URL
-  value: https://app-eu.whitesourcesoftware.com
 - name: MEND_SCA_API_URL
   value: https://api-app-eu.whitesourcesoftware.com/api/v2.0
 - name: MEND_LOG_LEVEL
@@ -56,6 +54,18 @@ steps:
         curl https://downloads.mend.io/cli/linux_amd64/mend -o /usr/local/bin/mend && chmod +x /usr/local/bin/mend
       fi
     displayName: 'Check and Install Mend CLI'
+
+  # Authenticate with Mend CLI
+  - script: |
+      mend auth login --non-interactive
+    env:
+      MEND_SCA_URL: $(MEND_SCA_URL)
+      MEND_SCA_EMAIL: $(MEND_SCA_EMAIL_SECRET)
+      MEND_SCA_USER_KEY: $(MEND_SCA_USER_KEY_SECRET)
+      MEND_SCA_ORG_UUID: $(MEND_SCA_ORG_UUID_SECRET)
+      MEND_SCA_API_URL: $(MEND_SCA_API_URL)
+      MEND_LOG_LEVEL: $(MEND_LOG_LEVEL)
+    displayName: 'Authenticate with Mend CLI'
 
   # Run Mend CLI Scans based on parameters
   - script: |
@@ -98,7 +108,7 @@ steps:
       then
         echo Running Mend Image scan
         echo "Showing images that will be scanned"
-        cat ${{ parameters.imagesToScan }}
+        cat "${{ parameters.imagesToScan }}"
         file="${{ parameters.imagesToScan }}"
         while IFS= read -r line
         do
@@ -121,6 +131,7 @@ steps:
 
       ### Moving Mend logs ###
       mv ~/.mend/logs $(System.DefaultWorkingDirectory)
+      mkdir -p $(System.DefaultWorkingDirectory)/logs
       mv *results* $(System.DefaultWorkingDirectory)/logs/
       #########################
     env:
@@ -132,3 +143,18 @@ steps:
       MEND_LOG_LEVEL: $(MEND_LOG_LEVEL)
     displayName: 'Mend CLI Scan'
 
+# Generate Mend SCA post-scan reports
+- template: mend-reports-template.yml@templates
+  parameters:
+    reportTypeList: ${{ parameters.postScanSCAReports }}
+
+# Publish logs and SARIF results
+- publish: $(System.DefaultWorkingDirectory)/logs
+  artifact: mend-logs-reports
+  condition: succeededOrFailed()
+  displayName: 'Publish Mend scan logs and reports'
+
+- publish: $(System.DefaultWorkingDirectory)/logs/code-results.sarif
+  artifact: CodeAnalysisLogs
+  condition: ${{ or(contains(parameters.scanTypeList, 'SAST'), contains(parameters.scanTypeList, 'ALL')) }}
+  displayName: 'Publish Mend SAST logs for SARIF SAST Scans Tab plugin'
