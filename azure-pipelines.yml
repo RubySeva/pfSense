@@ -5,7 +5,7 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-  - script: echo Testing CLI automation!
+  - script: echo Hello, world!
     displayName: 'Run a one-line script'
 
   - script: |
@@ -24,13 +24,18 @@ steps:
   # Download Mend CLI
   - script: |
       curl -L -o mend-cli.zip https://app.whitesourcesoftware.com/resources/cli-agent/download/Mend-cli.zip
-      unzip mend-cli.zip -d mend-cli
+      file mend-cli.zip
+      if ! unzip mend-cli.zip -d mend-cli; then
+        echo "Failed to unzip Mend CLI. Retrying with wget."
+        wget -O mend-cli.zip https://app.whitesourcesoftware.com/resources/cli-agent/download/Mend-cli.zip
+        unzip mend-cli.zip -d mend-cli
+      fi
       chmod +x mend-cli/mend
     displayName: 'Download and extract Mend CLI'
 
   # Set environment variables for Mend CLI authentication
   - script: |
-      export MEND_SCA_URL=https://app.whitesourcesoftware.com
+      export MEND_SCA_URL=https://app-eu.whitesourcesoftware.com
       export MEND_SCA_EMAIL="$(MEND_SCA_EMAIL)"
       export MEND_SCA_USER_KEY="$(MEND_SCA_USER_KEY)"
       export MEND_SCA_ORG_UUID="$(MEND_SCA_ORG_UUID)"
@@ -45,5 +50,5 @@ steps:
 
   # Run Mend SCA CLI to scan the project
   - script: |
-      ./mend-cli/mend dep -d . -s "Ruby-Platform//AzureCLI//PHP_automation" -u
+      ./mend-cli/mend dep -d . -s "Organization//product//project" -u
     displayName: 'Run Mend SCA CLI scan'
