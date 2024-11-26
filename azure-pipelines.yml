@@ -57,7 +57,7 @@ steps:
 
   # Authenticate with Mend CLI
   - script: |
-      mend auth login --non-interactive
+      mend auth login --non-interactive --env $(MEND_SCA_ENV)
     env:
       MEND_SCA_URL: $(MEND_SCA_URL)
       MEND_SCA_EMAIL: $(MEND_SCA_EMAIL_SECRET)
