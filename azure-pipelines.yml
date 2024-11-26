@@ -142,19 +142,3 @@ steps:
       MEND_SCA_API_URL: $(MEND_SCA_API_URL)
       MEND_LOG_LEVEL: $(MEND_LOG_LEVEL)
     displayName: 'Mend CLI Scan'
-
-# Generate Mend SCA post-scan reports
-- template: mend-reports-template.yml@templates
-  parameters:
-    reportTypeList: ${{ parameters.postScanSCAReports }}
-
-# Publish logs and SARIF results
-- publish: $(System.DefaultWorkingDirectory)/logs
-  artifact: mend-logs-reports
-  condition: succeededOrFailed()
-  displayName: 'Publish Mend scan logs and reports'
-
-- publish: $(System.DefaultWorkingDirectory)/logs/code-results.sarif
-  artifact: CodeAnalysisLogs
-  condition: ${{ or(contains(parameters.scanTypeList, 'SAST'), contains(parameters.scanTypeList, 'ALL')) }}
-  displayName: 'Publish Mend SAST logs for SARIF SAST Scans Tab plugin'
