@@ -1,0 +1,49 @@
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - script: echo Testing CLI automation!
+    displayName: 'Run a one-line script'
+
+  - script: |
+      echo Add other tasks to build, test, and deploy your project.
+      echo See https://aka.ms/yaml
+    displayName: 'Run a multi-line script'
+
+  # Install required packages including curl and PHP package manager (composer)
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y curl php-cli unzip
+      curl -sS https://getcomposer.org/installer | php
+      sudo mv composer.phar /usr/local/bin/composer
+    displayName: 'Install dependencies including PHP package manager'
+
+  # Download Mend CLI
+  - script: |
+      curl -L -o mend-cli.zip https://app.whitesourcesoftware.com/resources/cli-agent/download/Mend-cli.zip
+      unzip mend-cli.zip -d mend-cli
+      chmod +x mend-cli/mend
+    displayName: 'Download and extract Mend CLI'
+
+  # Set environment variables for Mend CLI authentication
+  - script: |
+      export MEND_SCA_URL=https://app.whitesourcesoftware.com
+      export MEND_SCA_EMAIL="$(MEND_SCA_EMAIL)"
+      export MEND_SCA_USER_KEY="$(MEND_SCA_USER_KEY)"
+      export MEND_SCA_ORG_UUID="$(MEND_SCA_ORG_UUID)"
+      export MEND_SCA_API_URL=https://api-app-eu.whitesourcesoftware.com/api/v2.0
+      export MEND_LOG_LEVEL=DEBUG
+    displayName: 'Set Mend environment variables'
+
+  # Install project dependencies using Composer
+  - script: |
+      composer install
+    displayName: 'Install PHP dependencies'
+
+  # Run Mend SCA CLI to scan the project
+  - script: |
+      ./mend-cli/mend dep -d . -s "Ruby-Platform//AzureCLI//PHP_automation" -u
+    displayName: 'Run Mend SCA CLI scan'
