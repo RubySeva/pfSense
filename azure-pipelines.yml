@@ -39,7 +39,7 @@ steps:
 
   # Authenticate with Mend CLI
   - script: |
-      mend auth login
+      mend auth login --non-interactive
     displayName: 'Authenticate with Mend CLI'
 
   # Install project dependencies using Composer
@@ -49,5 +49,14 @@ steps:
 
   # Run Mend SCA CLI to scan the project
   - script: |
-      mend dep -d . -s "Ruby-Platform//CLIAzure//PHPazure" -u 
+      echo Running Mend SCA scan
+      mend dep -u -s "Ruby-Platform//CLIAzure//PHPazure" --fail-policy --non-interactive --export-results dep-results.txt
+      export dep_exit=$?
+      if [[ "$dep_exit" == "9" ]]; then
+        echo "##vso[task.logissue type=warning;] Dependency scan policy violation"
+        echo "##vso[task.complete result=SucceededWithIssues;]"
+      else
+        echo "No policy violations found in dependencies scan"
+      fi
+      echo "##vso[task.uploadsummary]$(System.DefaultWorkingDirectory)/dep-results.txt"
     displayName: 'Run Mend SCA CLI scan'
