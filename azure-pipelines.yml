@@ -5,7 +5,7 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-  - script: echo Hello, world!
+  - script: echo Testing Mend CLI IN Azure!
     displayName: 'Run a one-line script'
 
   - script: |
@@ -21,15 +21,26 @@ steps:
       sudo mv composer.phar /usr/local/bin/composer
     displayName: 'Install dependencies including PHP package manager'
 
-  # Download Mend CLI
+  # Download Mend CLI with multiple retry logic
   - script: |
-      curl -L -o mend-cli.zip https://app.whitesourcesoftware.com/resources/cli-agent/download/Mend-cli.zip
-      file mend-cli.zip
-      if ! unzip mend-cli.zip -d mend-cli; then
-        echo "Failed to unzip Mend CLI. Retrying with wget."
-        wget -O mend-cli.zip https://app.whitesourcesoftware.com/resources/cli-agent/download/Mend-cli.zip
-        unzip mend-cli.zip -d mend-cli
-      fi
+      MAX_RETRIES=3
+      RETRY_DELAY=10
+      for ((i=1; i<=MAX_RETRIES; i++)); do
+        echo "Attempt $i to download Mend CLI..."
+        curl -L -o mend-cli.zip https://app.whitesourcesoftware.com/resources/cli-agent/download/Mend-cli.zip
+        if file mend-cli.zip | grep -q "Zip archive data"; then
+          echo "Successfully downloaded Mend CLI."
+          break
+        elif [ $i -lt $MAX_RETRIES ]; then
+          echo "Failed to download Mend CLI. Retrying in $RETRY_DELAY seconds..."
+          sleep $RETRY_DELAY
+        else
+          echo "Failed to download Mend CLI after $MAX_RETRIES attempts. Exiting."
+          exit 1
+        fi
+      done
+
+      unzip mend-cli.zip -d mend-cli || { echo "Failed to unzip Mend CLI."; exit 1; }
       chmod +x mend-cli/mend
     displayName: 'Download and extract Mend CLI'
 
