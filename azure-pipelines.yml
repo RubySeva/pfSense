@@ -36,6 +36,11 @@ steps:
       export MEND_LOG_LEVEL=DEBUG
     displayName: 'Set Mend environment variables'
 
+  # Authenticate with Mend CLI
+  - script: |
+      mend auth login
+    displayName: 'Authenticate with Mend CLI'
+
   # Install project dependencies using Composer
   - script: |
       composer install
