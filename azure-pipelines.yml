@@ -7,6 +7,9 @@ pool:
 variables:
 - name: MEND_URL
   value: https://app-eu.whitesourcesoftware.com
+  # value: https://saas-eu.mend.io
+- name: MEND_SCA_ENV
+  value: https://app-eu.whitesourcesoftware.com
 
 steps:
   - script: echo Testing Mend CLI IN Azure!
@@ -42,7 +45,7 @@ steps:
 
   # Authenticate with Mend CLI
   - script: |
-      mend auth login --non-interactive
+      mend auth login --non-interactive --env $MEND_SCA_ENV
     displayName: 'Authenticate with Mend CLI'
 
   # Install project dependencies using Composer
